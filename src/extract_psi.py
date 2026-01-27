@@ -23,12 +23,14 @@ def flatten_psi_data(data: dict) -> pd.DataFrame:
 
     for item in data['data']['items']:
         timestamp = item['timestamp']
-        readings = item['readings']['co_sub_index']
-        for region, value in readings.items():
-            rows.append({
-                'timestamp': timestamp,
-                'region': region,
-                'psi_value': value
+        readings = item['readings']
+        for psi_readings, value_sets in readings.items():
+            for region, value in value_sets.items():
+                rows.append({
+                    'timestamp': timestamp,
+                    'psi_readings': psi_readings,
+                    'region': region,
+                    'psi_value': value
                 })
     return pd.DataFrame(rows)
 
