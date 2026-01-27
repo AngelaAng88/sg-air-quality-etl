@@ -35,15 +35,23 @@ def flatten_pm25_data(data: dict) -> pd.DataFrame:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Fetch PM2.5 data for a given date (YYYY-MM-DD)")
-    parser.add_argument("--date", type=str, required=True, help="Date to fetch PM2.5 data for (format YYYY-MM-DD)")
+    parser.add_argument("--date", type=str, required=False, help="Date to fetch PM2.5 data for (format YYYY-MM-DD)")
     args = parser.parse_args()
 
     input_date = args.date
+    write_file = True
+
+    if not input_date:
+        from datetime import datetime
+        input_date = datetime.now().strftime("%Y-%m-%d")
+        write_file = False
+
     data = fetch_pm25_data(input_date)
     df = flatten_pm25_data(data)
     print(df)
 
     file_name = f"data/pm25_{input_date}.csv"  # e.g., data/pm25_2026-01-01.csv
 
-    # Save the DataFrame
-    df.to_csv(file_name, index=False)
+    # Save the DataFrame if write_file is True
+    if write_file:
+        df.to_csv(file_name, index=False)
