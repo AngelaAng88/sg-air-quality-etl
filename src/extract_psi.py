@@ -8,6 +8,19 @@ headers = {}
 if DATA_GOV_SG_API_KEY:
     headers["x-api-key"] = DATA_GOV_SG_API_KEY
 
+def extract_psi_region_metadata(data: dict) -> pd.DataFrame:
+    rows = []
+    for item in data['data']['regionMetadata']:
+        region = item['name']
+        latitude =item['labelLocation']['latitude']
+        longitude = item['labelLocation']['longitude']
+        rows.append({
+            'region': region,
+            'latitude': latitude,
+            'longitude': longitude
+            })
+    return pd.DataFrame(rows)
+
 def fetch_psi_data(date: str | None = None):
     params = {}
     if date:
@@ -18,9 +31,8 @@ def fetch_psi_data(date: str | None = None):
 
     return response.json()
 
-def flatten_psi_data(data: dict) -> pd.DataFrame:
+def extract_psi_data(data: dict) -> pd.DataFrame:
     rows = []
-
     for item in data['data']['items']:
         timestamp = item['timestamp']
         readings = item['readings']
@@ -34,26 +46,13 @@ def flatten_psi_data(data: dict) -> pd.DataFrame:
                 })
     return pd.DataFrame(rows)
 
-if __name__ == "__main__":
+def flatten_psi_data(psi_data: dict, metadata: dict) -> pd.DataFrame:
+    merged_df = pd.merge(psi_data, metadata, on="region", how="left")
+    return merged_df
 
-    parser = argparse.ArgumentParser(description="Fetch PSI data for a given date (YYYY-MM-DD)")
-    parser.add_argument("--date", type=str, required=False, help="Date to fetch PSI data for (format YYYY-MM-DD)")
-    args = parser.parse_args()
-
-    input_date = args.date
-    write_file = True
-
-    if not input_date:
-        from datetime import datetime
-        input_date = datetime.now().strftime("%Y-%m-%d")
-        write_file = False
-
-    data = fetch_psi_data(input_date)
-    df = flatten_psi_data(data)
-    print(df)
-
-    file_name = f"data/psi_{input_date}.csv"  # e.g., data/psi_2026-01-01.csv
-
+def save_psi_data_to_csv(flattened_data: pd.DataFrame, file_name: str, write_file: bool):
     # Save the DataFrame if write_file is True
     if write_file:
-        df.to_csv(file_name, index=False)
+        flattened_data.to_csv(file_name, index=False)
+    else:
+        print(flattened_data)
