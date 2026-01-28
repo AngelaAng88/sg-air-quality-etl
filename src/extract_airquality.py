@@ -1,6 +1,6 @@
 from extract_pm25 import extract_pm25_region_metadata, extract_pm25_data, flatten_pm25_data, fetch_pm25_data, save_pm25_data_to_csv
 from extract_psi import extract_psi_region_metadata, extract_psi_data, flatten_psi_data, fetch_psi_data, save_psi_data_to_csv
-
+from datetime import datetime
 import argparse
 
 if __name__ == "__main__":
@@ -11,10 +11,10 @@ if __name__ == "__main__":
 
     input_date = args.date
     write_file = True
+    current_date = datetime.now().strftime("%Y-%m-%d")
 
-    if not input_date:
-        from datetime import datetime
-        input_date = datetime.now().strftime("%Y-%m-%d")
+    if not input_date or input_date == current_date:
+        input_date = current_date
         write_file = False
 
     # PM2.5 Data Extraction
@@ -32,3 +32,13 @@ if __name__ == "__main__":
     flatten_psi_df = flatten_psi_data(psi_df, psi_metadata_df)
     psi_file_name = f"data/psi_{input_date}.csv"  # e.g., data/psi_2026-01-01.csv
     save_psi_data_to_csv(flatten_psi_df, psi_file_name, write_file)
+
+    # Combine PM2.5 and PSI data
+    flatten_pm25_df = flatten_pm25_df.set_index(["timestamp", "region"])
+    flatten_psi_df = flatten_psi_df.set_index(["timestamp", "region"])
+    combined_df = flatten_pm25_df.join(flatten_psi_df.drop(columns=['latitude', 'longitude']), how='left')
+    combined_file_name = f"data/air_quality_{input_date}.csv"  # e.g., data/air_quality_2026-01-01.csv
+    if write_file:
+        combined_df.to_csv(combined_file_name, index=True)
+    else:
+        print(combined_df)

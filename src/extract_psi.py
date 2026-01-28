@@ -47,7 +47,16 @@ def extract_psi_data(data: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 def flatten_psi_data(psi_data: dict, metadata: dict) -> pd.DataFrame:
-    merged_df = pd.merge(psi_data, metadata, on="region", how="left")
+    # Pivot psi_readings into separate columns
+    pivoted_df = psi_data.pivot_table(
+        index=['timestamp', 'region'],
+        columns='psi_readings',
+        values='psi_value',
+        aggfunc='first'
+    ).reset_index()
+    
+    # Merge with metadata
+    merged_df = pd.merge(pivoted_df, metadata, on="region", how="left")
     return merged_df
 
 def save_psi_data_to_csv(flattened_data: pd.DataFrame, file_name: str, write_file: bool):
