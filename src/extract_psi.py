@@ -1,12 +1,14 @@
-import requests, json
 import pandas as pd
-import argparse
-from config import DATA_GOV_SG_API_KEY, PSI_API_URI
+from config import PSI_API_URI
+from utils import fetch_api_data
 
-headers = {}
+def fetch_psi_data(date: str | None = None):
+    params = {}
+    if date:
+        params["date"] = date
 
-if DATA_GOV_SG_API_KEY:
-    headers["x-api-key"] = DATA_GOV_SG_API_KEY
+    json_data = fetch_api_data(params, PSI_API_URI)
+    return json_data
 
 def extract_psi_region_metadata(data: dict) -> pd.DataFrame:
     rows = []
@@ -20,16 +22,6 @@ def extract_psi_region_metadata(data: dict) -> pd.DataFrame:
             'longitude': longitude
             })
     return pd.DataFrame(rows)
-
-def fetch_psi_data(date: str | None = None):
-    params = {}
-    if date:
-        params["date"] = date
-
-    response = requests.get(PSI_API_URI, headers=headers, params=params, timeout=10)
-    response.raise_for_status()  # fail fast
-
-    return response.json()
 
 def extract_psi_data(data: dict) -> pd.DataFrame:
     rows = []
@@ -59,9 +51,3 @@ def flatten_psi_data(psi_data: dict, metadata: dict) -> pd.DataFrame:
     merged_df = pd.merge(pivoted_df, metadata, on="region", how="left")
     return merged_df
 
-def save_psi_data_to_csv(flattened_data: pd.DataFrame, file_name: str, write_file: bool):
-    # Save the DataFrame if write_file is True
-    if write_file:
-        flattened_data.to_csv(file_name, index=False)
-    else:
-        print(flattened_data)
