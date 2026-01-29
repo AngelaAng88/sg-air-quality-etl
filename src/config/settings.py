@@ -2,10 +2,12 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 # Load the API key from environment variables (.env file)
 DATA_GOV_SG_API_KEY = os.getenv("DATA_GOV_SG_API_KEY")
 PM25_API_URI = os.getenv("PM25_API_URI")
 PSI_API_URI = os.getenv("PSI_API_URI")
+HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "10"))
 
 if not DATA_GOV_SG_API_KEY:
     raise ValueError("DATA_GOV_SG_API_KEY is not set")
