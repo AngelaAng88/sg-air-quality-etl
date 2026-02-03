@@ -1,7 +1,10 @@
 import pandas as pd
+from common.logger import logger
 
 def flatten_pm25(pm25_readings: dict, metadata: dict) -> pd.DataFrame:
+    logger.info("Flattening PM2.5 readings with region metadata")
     merged_df = pd.merge(pm25_readings, metadata, on="region", how="left")
+    logger.info(f"Flattened PM2.5 readings with region metadata ({len(merged_df)} records)")
     return merged_df
 
 def transform_pm25(df: dict) -> dict:
@@ -44,5 +47,5 @@ def sort_pm25(df: dict) -> dict:
     df["region"] = df["region"].astype(
         pd.CategoricalDtype(categories=region_order, ordered=True)
     )
-
-    return df.sort_values(by=["timestamp", "region"])
+    sort_df = df.sort_values(by=["timestamp", "region"])
+    return sort_df

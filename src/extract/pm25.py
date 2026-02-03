@@ -1,17 +1,24 @@
 import pandas as pd
 from config.settings import PM25_API_URI
 from common.http import fetch_api_data
+from common.logger import logger
 
 def fetch_pm25_json(date: str | None = None):
     headers = {}
     params = {}
     if date:
+        logger.info(f"PM2.5 processing date: {date}")
         params["date"] = date
+    else:
+        logger.info(f"No date provided, using default behavior.")
 
-    json_data = fetch_api_data(headers, params, PM25_API_URI)
-    return json_data
+    response = fetch_api_data(headers, params, PM25_API_URI)
+    logger.info(f"Received {len(response.json()['data']['items'])} time records")
+    logger.info("PM2.5 data fetched successfully")
+    return response.json()
 
 def extract_pm25_readings(data: dict) -> pd.DataFrame:
+    logger.info("Extracting PM2.5 readings into DataFrame")
     rows = []
     for item in data['data']['items']:
         timestamp = item['timestamp']
@@ -22,9 +29,12 @@ def extract_pm25_readings(data: dict) -> pd.DataFrame:
                 'region': region,
                 'pm25_value': value
                 })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    logger.info(f"Extracted {len(df)} PM2.5 reading records")
+    return df
 
 def extract_pm25_region_metadata(data: dict) -> pd.DataFrame:
+    logger.info("Extracting PM2.5 region metadata into DataFrame")
     rows = []
     for item in data['data']['regionMetadata']:
         region = item['name']
@@ -35,4 +45,6 @@ def extract_pm25_region_metadata(data: dict) -> pd.DataFrame:
             'latitude': latitude,
             'longitude': longitude
             })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    logger.info(f"Extracted {len(df)} region metadata records for PM2.5 data")
+    return df

@@ -1,14 +1,20 @@
 import requests
 from config.settings import DATA_GOV_SG_API_KEY, HTTP_TIMEOUT
+from common.logger import logger
+import time
 
 def fetch_api_data(headers: dict, params: dict, api_uri: str):
+    logger.info(f"Fetching data from API: {api_uri} with params: {params}")
     if DATA_GOV_SG_API_KEY:
         headers["x-api-key"] = DATA_GOV_SG_API_KEY
 
     try:
+        start_time = time.perf_counter()
         response = requests.get(api_uri, headers=headers, params=params, timeout=HTTP_TIMEOUT)
-        response.raise_for_status()  
-        return response.json()
+        response.raise_for_status()
+        end_time = time.perf_counter()
+        logger.info("Fetched API data (API=%s, duration=%.2fs)", api_uri, end_time - start_time)
+        return response
     #todo: improve error handling and handle specific server code messages
     except requests.exceptions.HTTPError as e:
         raise RuntimeError(f"HTTP error {response.status_code}: {response.text}") from e

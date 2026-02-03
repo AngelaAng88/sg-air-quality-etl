@@ -1,17 +1,24 @@
 import pandas as pd
 from config.settings import PSI_API_URI
 from common.http import fetch_api_data
+from common.logger import logger
 
 def fetch_psi_json(date: str | None = None):
     headers = {}
     params = {}
     if date:
+        logger.info(f"PSI processing date: {date}")
         params["date"] = date
+    else:
+        logger.info(f"No date provided, using default behavior.")
 
-    json_data = fetch_api_data(headers, params, PSI_API_URI)
-    return json_data
+    response = fetch_api_data(headers, params, PSI_API_URI)
+    logger.info(f"Received {len(response.json()['data']['items'])} time records")
+    logger.info("PSI data fetched successfully")
+    return response.json()
 
 def extract_psi_readings(data: dict) -> pd.DataFrame:
+    logger.info("Extracting PSI readings into DataFrame")
     rows = []
     for item in data['data']['items']:
         timestamp = item['timestamp']
@@ -24,9 +31,12 @@ def extract_psi_readings(data: dict) -> pd.DataFrame:
                     'region': region,
                     'psi_value': value
                 })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    logger.info(f"Extracted {len(df)} raw PSI measurement rows (multiple PSI metrics per timestamp; to be pivoted into columns)")
+    return df
 
 def extract_psi_region_metadata(data: dict) -> pd.DataFrame:
+    logger.info("Extracting PSI region metadata into DataFrame")
     rows = []
     for item in data['data']['regionMetadata']:
         region = item['name']
@@ -37,4 +47,6 @@ def extract_psi_region_metadata(data: dict) -> pd.DataFrame:
             'latitude': latitude,
             'longitude': longitude
             })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    logger.info(f"Extracted {len(df)} region metadata records for PSI data")
+    return df
