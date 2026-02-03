@@ -15,8 +15,11 @@ def fetch_api_data(headers: dict, params: dict, api_uri: str):
         end_time = time.perf_counter()
         logger.info("Fetched API data (API=%s, duration=%.2fs)", api_uri, end_time - start_time)
         return response
-    #todo: improve error handling and handle specific server code messages
+    
     except requests.exceptions.HTTPError as e:
+        logger.error("HTTP error calling API | url=%s | status=%s | response=%s",
+                     api_uri, response.status_code, response.text, exc_info=True)         
         raise RuntimeError(f"HTTP error {response.status_code}: {response.text}") from e
     except requests.exceptions.RequestException as e:
+        logger.error("Network / connection error occurred: %s", e)
         raise RuntimeError("Network / connection error") from e
