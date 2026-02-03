@@ -1,6 +1,6 @@
 
 import pandas as pd
-from common.logger import logger
+from sg_air_quality.common.logger import logger
 
 def merge_pm25_psi(pm25_df: dict, psi_df: dict) -> dict:
     logger.info("Merging PM2.5 and PSI DataFrames on timestamp and region into Air Quality DataFrame")

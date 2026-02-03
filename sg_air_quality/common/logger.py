@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from common.runtime import RUN_ID
+from sg_air_quality.common.runtime import RUN_ID
 
 # Create logs directory if it doesn't exist
 LOG_DIR = Path("logs")

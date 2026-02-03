@@ -1,29 +1,22 @@
-from extract.pm25 import fetch_pm25_json, extract_pm25_region_metadata, extract_pm25_readings
-from extract.psi import fetch_psi_json,extract_psi_region_metadata,extract_psi_readings
+from sg_air_quality.extract.pm25 import fetch_pm25_json, extract_pm25_region_metadata, extract_pm25_readings
+from sg_air_quality.extract.psi import fetch_psi_json,extract_psi_region_metadata,extract_psi_readings
 
-from transform.pm25 import flatten_pm25, transform_pm25, sort_pm25
-from transform.psi import flatten_psi, transform_psi, sort_psi
-from transform.air_quality import merge_pm25_psi, sort_air_quality, transform_air_quality
+from sg_air_quality.transform.pm25 import flatten_pm25, transform_pm25, sort_pm25
+from sg_air_quality.transform.psi import flatten_psi, transform_psi, sort_psi
+from sg_air_quality.transform.air_quality import merge_pm25_psi, sort_air_quality, transform_air_quality
 
-from load.paths import pm25_csv_path, psi_csv_path, air_quality_csv_path
-from load.csv_loader import save_dataframe_to_csv
-from load.bigquery_loader import save_dataframe_to_bigquery
+from sg_air_quality.load.paths import retrieve_pm25_csv_path, retrieve_psi_csv_path, retrieve_air_quality_csv_path
+from sg_air_quality.load.csv_loader import save_dataframe_to_csv
+from sg_air_quality.load.bigquery_loader import save_dataframe_to_bigquery
 
 from datetime import datetime, time, timedelta
-from common.logger import logger
+from sg_air_quality.common.logger import logger
 import argparse
 import time
-from config.settings import BQ_PM25_TABLE, BQ_PSI_TABLE, BQ_AIR_QUALITY_TABLE
+from sg_air_quality.config.settings import BQ_PM25_TABLE, BQ_PSI_TABLE, BQ_AIR_QUALITY_TABLE
 
-if __name__ == "__main__":
-    #to-do: logging for start and end of ETL process
-    parser = argparse.ArgumentParser(description="Fetch air quality data for a given date (YYYY-MM-DD)")
-    parser.add_argument("--date", type=str, required=False, help="Date to fetch air quality data for (format YYYY-MM-DD)")
-    args = parser.parse_args()
-
-    input_date = args.date
+def run_etl_for_date(input_date: str | None = None):
     toArchive = True
-
     #To-do: refactor date logic into a utility function
     today = datetime.now().strftime("%Y-%m-%d")
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -55,7 +48,7 @@ if __name__ == "__main__":
     logger.info("Transforming PM2.5 DataFrame complete (%s records, duration=%.2fs)", len(flatten_pm25_df), pm25_transform_end_time - pm25_transform_start_time)
     # Load PM2.5 data
     pm25_load_start_time = time.perf_counter()
-    pm25_csv_path = pm25_csv_path(input_date, toArchive)
+    pm25_csv_path = retrieve_pm25_csv_path(input_date, toArchive)
     save_dataframe_to_csv(flatten_pm25_df, pm25_csv_path)
     save_dataframe_to_bigquery(flatten_pm25_df,BQ_PM25_TABLE)
     pm25_load_end_time = time.perf_counter()
@@ -83,7 +76,7 @@ if __name__ == "__main__":
     logger.info("PSI DataFrame transformation complete (%s records, duration=%.2fs)", len(flatten_psi_df), psi_transform_end_time - psi_transform_start_time)
     # Load PSI data
     psi_load_start_time = time.perf_counter()
-    psi_csv_path = psi_csv_path(input_date, toArchive)
+    psi_csv_path = retrieve_psi_csv_path(input_date, toArchive)
     save_dataframe_to_csv(flatten_psi_df, psi_csv_path)
     save_dataframe_to_bigquery(flatten_psi_df,BQ_PSI_TABLE)
     psi_load_end_time = time.perf_counter()
@@ -101,10 +94,18 @@ if __name__ == "__main__":
     logger.info("Air Quality DataFrame transformation complete (%s records, duration=%.2fs)", len(air_quality_df), air_quality_transform_end_time - air_quality_transfor_start_time)
     # Load merged data
     air_quality_load_start_time = time.perf_counter()
-    air_quality_csv_path = air_quality_csv_path(input_date, toArchive)
+    air_quality_csv_path = retrieve_air_quality_csv_path(input_date, toArchive)
     save_dataframe_to_csv(air_quality_df, air_quality_csv_path)
     save_dataframe_to_bigquery(air_quality_df,BQ_AIR_QUALITY_TABLE)
     air_quality_load_end_time = time.perf_counter()
     logger.info("Loaded Air Quality DataFrame to CSV and BigQuery (%s records, duration=%.2fs)", len(air_quality_df), air_quality_load_end_time - air_quality_load_start_time)
     pipeline_end_time = time.perf_counter()
     logger.info("Air Quality ETL run completed in %.2f seconds", pipeline_end_time - pipeline_start_time)
+
+if __name__ == "__main__":
+    #to-do: logging for start and end of ETL process
+    parser = argparse.ArgumentParser(description="Fetch air quality data for a given date (YYYY-MM-DD)")
+    parser.add_argument("--date", type=str, required=False, help="Date to fetch air quality data for (format YYYY-MM-DD)")
+    args = parser.parse_args()
+    input_date = args.date
+    run_etl_for_date(input_date)

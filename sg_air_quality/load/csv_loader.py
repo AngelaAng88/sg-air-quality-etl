@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from common.logger import logger
+from sg_air_quality.common.logger import logger
 import time
 
 def save_dataframe_to_csv(df: pd.DataFrame, path: Path):

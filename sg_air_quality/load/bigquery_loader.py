@@ -1,7 +1,7 @@
 import pandas as pd
 from google.cloud import bigquery
 from datetime import datetime, timedelta, timezone
-from common.logger import logger
+from sg_air_quality.common.logger import logger
 import time
 
 def save_dataframe_to_bigquery(df: pd.DataFrame, table_id: str):
