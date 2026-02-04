@@ -1,3 +1,4 @@
+from typing import Optional
 from sg_air_quality.extract.pm25 import fetch_pm25_json, extract_pm25_region_metadata, extract_pm25_readings
 from sg_air_quality.extract.psi import fetch_psi_json,extract_psi_region_metadata,extract_psi_readings
 
@@ -18,7 +19,7 @@ from sg_air_quality.config.settings import BQ_PM25_TABLE, BQ_PSI_TABLE, BQ_AIR_Q
 setup_logging()
 logger = get_logger(__name__)
 
-def run_etl_for_date(input_date: str | None = None):
+def run_etl_for_date(input_date: Optional[str] = None):
     toArchive = True
     #To-do: refactor date logic into a utility function
     today = datetime.now().strftime("%Y-%m-%d")
@@ -62,7 +63,7 @@ def run_etl_for_date(input_date: str | None = None):
     # PSI Data Extraction
     # Extract PSI data
     logger.info("PSI Data ETL started")
-    psi_start_time = time.perf_counter()
+
     psi_json = fetch_psi_json(input_date)
     psi_parsed_start_time = time.perf_counter()
     psi_metadata_df = extract_psi_region_metadata(psi_json)

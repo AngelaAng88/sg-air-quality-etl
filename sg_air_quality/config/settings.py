@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(PROJECT_ROOT / ".env")
 
 # Load the API key from environment variables (.env file)
 DATA_GOV_SG_API_KEY = os.getenv("DATA_GOV_SG_API_KEY")

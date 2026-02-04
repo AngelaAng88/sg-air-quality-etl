@@ -6,7 +6,7 @@ from sg_air_quality.common.logger import setup_logging, get_logger
 setup_logging()
 logger = get_logger(__name__)
 
-def fetch_psi_json(date: str | None = None):
+def fetch_psi_json(date: str):
     headers = {}
     params = {}
     if date:
