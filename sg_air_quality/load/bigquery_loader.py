@@ -1,8 +1,11 @@
 import pandas as pd
 from google.cloud import bigquery
 from datetime import datetime, timedelta, timezone
-from sg_air_quality.common.logger import logger
+from sg_air_quality.common.logger import setup_logging, get_logger
 import time
+
+setup_logging()
+logger = get_logger(__name__)
 
 def save_dataframe_to_bigquery(df: pd.DataFrame, table_id: str):
     logger.info(f"Loading DataFrame to BigQuery table {table_id}")

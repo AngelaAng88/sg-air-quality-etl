@@ -1,7 +1,10 @@
 import pandas as pd
 from sg_air_quality.config.settings import PM25_API_URI
 from sg_air_quality.common.http import fetch_api_data
-from sg_air_quality.common.logger import logger
+from sg_air_quality.common.logger import setup_logging, get_logger
+
+setup_logging()
+logger = get_logger(__name__)
 
 def fetch_pm25_json(date: str | None = None):
     headers = {}

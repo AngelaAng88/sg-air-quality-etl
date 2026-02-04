@@ -1,7 +1,10 @@
 import requests
 from sg_air_quality.config.settings import DATA_GOV_SG_API_KEY, HTTP_TIMEOUT
-from sg_air_quality.common.logger import logger
+from sg_air_quality.common.logger import setup_logging, get_logger
 import time
+
+setup_logging()
+logger = get_logger(__name__)
 
 def fetch_api_data(headers: dict, params: dict, api_uri: str):
     logger.info(f"Fetching data from API: {api_uri} with params: {params}")

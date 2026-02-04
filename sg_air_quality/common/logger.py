@@ -7,18 +7,28 @@ LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR /f"air_quality_etl_{RUN_ID}.log"
 
-logger = logging.getLogger("air_quality_etl")
+def setup_logging():
+    formatter = logging.Formatter(
+        f"%(asctime)s | run_id={RUN_ID} | %(levelname)s | %(name)s | %(etl_module)s | %(funcName)s | %(message)s"
+    )
 
-logger.setLevel(logging.INFO)
-
-if not logger.handlers:
     handlers=[
         logging.FileHandler(LOG_FILE),
         logging.StreamHandler()
     ]
-    formatter = logging.Formatter(
-        f"%(asctime)s | run_id={RUN_ID} | %(levelname)s | %(message)s"
+    
+    root_logger = logging.getLogger("air_quality_etl")
+    root_logger.setLevel(logging.INFO)
+
+    if not root_logger.handlers:
+        for handler in handlers:
+            handler.setFormatter(formatter)
+            root_logger.addHandler(handler)
+
+
+def get_logger(module_name: str):
+    base_logger = logging.getLogger("air_quality_etl")
+    return logging.LoggerAdapter(
+        base_logger,
+        {"etl_module": module_name}
     )
-    for handler in handlers:
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)

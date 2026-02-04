@@ -1,5 +1,8 @@
 import pandas as pd
-from sg_air_quality.common.logger import logger
+from sg_air_quality.common.logger import setup_logging, get_logger
+
+setup_logging()
+logger = get_logger(__name__)
 
 def flatten_psi(psi_readings: dict, metadata: dict) -> pd.DataFrame:
     logger.info("Flattening PSI readings with region metadata")

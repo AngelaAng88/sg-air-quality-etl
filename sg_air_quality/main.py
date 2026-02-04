@@ -10,10 +10,13 @@ from sg_air_quality.load.csv_loader import save_dataframe_to_csv
 from sg_air_quality.load.bigquery_loader import save_dataframe_to_bigquery
 
 from datetime import datetime, time, timedelta
-from sg_air_quality.common.logger import logger
+from sg_air_quality.common.logger import setup_logging, get_logger
 import argparse
 import time
 from sg_air_quality.config.settings import BQ_PM25_TABLE, BQ_PSI_TABLE, BQ_AIR_QUALITY_TABLE
+
+setup_logging()
+logger = get_logger(__name__)
 
 def run_etl_for_date(input_date: str | None = None):
     toArchive = True
