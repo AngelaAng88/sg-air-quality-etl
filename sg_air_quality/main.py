@@ -12,6 +12,7 @@ from sg_air_quality.load.bigquery_loader import save_dataframe_to_bigquery
 
 from datetime import datetime, time, timedelta
 from sg_air_quality.common.logger import setup_logging, get_logger
+from sg_air_quality.common.runtime import TODAY, YESTERDAY, to_archive, set_input_date
 import argparse
 import time
 from sg_air_quality.config.settings import BQ_PM25_TABLE, BQ_PSI_TABLE, BQ_AIR_QUALITY_TABLE
@@ -20,16 +21,10 @@ setup_logging()
 logger = get_logger(__name__)
 
 def run_etl_for_date(input_date: Optional[str] = None):
-    toArchive = True
-    #To-do: refactor date logic into a utility function
-    today = datetime.now().strftime("%Y-%m-%d")
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
- 
-    if not input_date:
-        input_date = yesterday
-    elif input_date == today:
-        toArchive = False
-
+    yesterday = YESTERDAY
+    today = TODAY
+    input_date = set_input_date(input_date)
+    toArchive = to_archive(input_date)
     pipeline_start_time = time.perf_counter()
         
     # PM2.5 Data Extraction
