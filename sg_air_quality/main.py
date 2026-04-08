@@ -2,6 +2,7 @@ from typing import Optional
 from sg_air_quality.extract.pm25 import fetch_pm25_json, extract_pm25_region_metadata, extract_pm25_readings
 from sg_air_quality.extract.psi import fetch_psi_json,extract_psi_region_metadata,extract_psi_readings
 
+from sg_air_quality.pipeline.runner import run_single_etl
 from sg_air_quality.transform.pm25 import flatten_pm25, transform_pm25, sort_pm25
 from sg_air_quality.transform.psi import flatten_psi, transform_psi, sort_psi
 from sg_air_quality.transform.air_quality import merge_pm25_psi, sort_air_quality, transform_air_quality
@@ -10,7 +11,6 @@ from sg_air_quality.load.paths import retrieve_pm25_csv_path, retrieve_psi_csv_p
 from sg_air_quality.load.csv_loader import save_dataframe_to_csv
 from sg_air_quality.load.bigquery_loader import save_dataframe_to_bigquery
 
-from datetime import datetime, time, timedelta
 from sg_air_quality.common.logger import setup_logging, get_logger
 from sg_air_quality.common.runtime import TODAY, YESTERDAY, to_archive, set_input_date
 import argparse
@@ -27,60 +27,41 @@ def run_etl_for_date(input_date: Optional[str] = None):
     toArchive = to_archive(input_date)
     pipeline_start_time = time.perf_counter()
         
-    # PM2.5 Data Extraction
-    # Extract PM2.5 data
-    logger.info("PM2.5 Data ETL started")
-    pm25_start_time = time.perf_counter()
-    pm25_json = fetch_pm25_json(input_date)
-    pm25_parsed_start_time = time.perf_counter()
-    pm25_metadata_df = extract_pm25_region_metadata(pm25_json)
-    pm25_reading_df = extract_pm25_readings(pm25_json)
-    pm25_parsed_end_time = time.perf_counter()
-    logger.info("Parsed PM2.5 JSON into raw records (rows=%s, duration=%.2fs)", len(pm25_reading_df), pm25_parsed_end_time - pm25_parsed_start_time)
-    # Transform PM2.5 data
-    pm25_transform_start_time = time.perf_counter()
-    flatten_pm25_df = flatten_pm25(pm25_reading_df, pm25_metadata_df)
-    logger.info("Transforming PM2.5 DataFrame (type casting, date enrichment, sorting)")
-    flatten_pm25_df = transform_pm25(flatten_pm25_df)
-    flatten_pm25_df = sort_pm25(flatten_pm25_df)
-    pm25_transform_end_time = time.perf_counter()
-    logger.info("Transforming PM2.5 DataFrame complete (%s records, duration=%.2fs)", len(flatten_pm25_df), pm25_transform_end_time - pm25_transform_start_time)
-    # Load PM2.5 data
-    pm25_load_start_time = time.perf_counter()
-    pm25_csv_path = retrieve_pm25_csv_path(input_date, toArchive)
-    save_dataframe_to_csv(flatten_pm25_df, pm25_csv_path)
-    save_dataframe_to_bigquery(flatten_pm25_df,BQ_PM25_TABLE)
-    pm25_load_end_time = time.perf_counter()
-    logger.info("Loaded PM2.5 DataFrame to CSV and BigQuery (%s records, duration=%.2fs)", len(flatten_pm25_df), pm25_load_end_time - pm25_load_start_time)
-    pm25_end_time = time.perf_counter()
-    logger.info("PM2.5 Data ETL finished successfully in %.2fs", pm25_end_time - pm25_start_time)
+    #PM2.5 ETL using run_single_etl function
+    flatten_pm25_df = run_single_etl(
+        #For logging purposes, we can label this ETL run as "PM2.5"
+        label = "PM2.5",
+        #fetch_function is a lambda function that calls fetch_pm25_json with the input_date
+        fetch_function = lambda: fetch_pm25_json(input_date),
+        #extract_functions is a lambda function that takes the raw JSON and returns a tuple of (metadata_df, reading_df)
+        #by calling the respective extract functions
+        extract_functions = lambda j: (extract_pm25_region_metadata(j), extract_pm25_readings(j)),
+        #transform_functions is a lambda function that takes the metadata_df and reading_df and applies the flatten,
+        #transform, and sort functions in sequence
+        transform_functions = lambda meta, readings: sort_pm25(transform_pm25(flatten_pm25(readings, meta))),
+        #csv_path (string) is obtained by calling retrieve_pm25_csv_path with the input_date and toArchive flag
+        csv_path = retrieve_pm25_csv_path(input_date, toArchive),
+        #bq_table (string) is the constant BQ_PM25_TABLE imported from settings
+        bq_table = BQ_PM25_TABLE
+    )
 
-    # PSI Data Extraction
-    # Extract PSI data
-    logger.info("PSI Data ETL started")
+    # PSI ETL using run_single_etl function
+    flatten_psi_df = run_single_etl(
+        #For logging purposes, we can label this ETL run as "PSI"
+        label = "PSI",
+        #fetch_function is a lambda function that calls fetch_psi_json with the input_date
+        fetch_function = lambda: fetch_psi_json(input_date),
+        #extract_functions is a lambda function that takes the raw JSON and returns a tuple of (metadata_df, reading_df)
+        extract_functions = lambda j: (extract_psi_region_metadata(j), extract_psi_readings(j)),
+        #transform_functions is a lambda function that takes the metadata_df and reading_df and applies the flatten,
+        #transform, and sort functions in sequence
+        transform_functions = lambda meta, readings: sort_psi(transform_psi(flatten_psi(readings, meta))),
+        #csv_path (string) is obtained by calling retrieve_psi_csv_path with the input_date and toArchive flag
+        csv_path = retrieve_psi_csv_path(input_date, toArchive),
+        #bq_table (string) is the constant BQ_PSI_TABLE imported from settings
+        bq_table = BQ_PSI_TABLE
+    )
 
-    psi_json = fetch_psi_json(input_date)
-    psi_parsed_start_time = time.perf_counter()
-    psi_metadata_df = extract_psi_region_metadata(psi_json)
-    psi_reading_df = extract_psi_readings(psi_json)
-    psi_parsed_end_time = time.perf_counter()
-    logger.info("Parsed PSI JSON into raw records (rows=%s, duration=%.2fs)", len(psi_reading_df), psi_parsed_end_time - psi_parsed_start_time)
-    # Transform PSI data
-    psi_transform_start_time = time.perf_counter()
-    flatten_psi_df = flatten_psi(psi_reading_df, psi_metadata_df)
-    logger.info("Transforming PSI DataFrame (type casting, date enrichment, sorting)")
-    flatten_psi_df = transform_psi(flatten_psi_df)
-    flatten_psi_df = sort_psi(flatten_psi_df)
-    psi_transform_end_time = time.perf_counter()
-    logger.info("PSI DataFrame transformation complete (%s records, duration=%.2fs)", len(flatten_psi_df), psi_transform_end_time - psi_transform_start_time)
-    # Load PSI data
-    psi_load_start_time = time.perf_counter()
-    psi_csv_path = retrieve_psi_csv_path(input_date, toArchive)
-    save_dataframe_to_csv(flatten_psi_df, psi_csv_path)
-    save_dataframe_to_bigquery(flatten_psi_df,BQ_PSI_TABLE)
-    psi_load_end_time = time.perf_counter()
-    logger.info("Loaded PSI DataFrame to CSV and BigQuery (%s records, duration=%.2fs)", len(flatten_psi_df), psi_load_end_time - psi_load_start_time)
-#
     # Merge PM2.5 and PSI data
     # Transform merged PM2.5 and PSI data
     logger.info("Air Quality Data ETL started")
@@ -107,4 +88,8 @@ if __name__ == "__main__":
     parser.add_argument("--date", type=str, required=False, help="Date to fetch air quality data for (format YYYY-MM-DD)")
     args = parser.parse_args()
     input_date = args.date
-    run_etl_for_date(input_date)
+    try:
+        run_etl_for_date(input_date)
+    except Exception as e:
+        logger.exception("ETL pipeline failed: %s", e)
+        raise SystemExit(1)

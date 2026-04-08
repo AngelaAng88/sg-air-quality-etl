@@ -22,7 +22,7 @@ def fetch_api_data(headers: dict, params: dict, api_uri: str):
     except requests.exceptions.HTTPError as e:
         logger.error("HTTP error calling API | url=%s | status=%s | response=%s",
                      api_uri, response.status_code, response.text, exc_info=True)         
-        raise RuntimeError(f"HTTP error {response.status_code}: {response.text}") from e
+        raise RuntimeError(f"HTTP error {e.response.status_code}") from e
     except requests.exceptions.RequestException as e:
         logger.error("Network / connection error occurred: %s", e)
         raise RuntimeError("Network / connection error") from e
