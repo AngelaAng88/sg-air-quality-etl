@@ -1,15 +1,19 @@
 import logging
+import os
 from pathlib import Path
-from sg_air_quality.common.runtime import RUN_ID
+from sg_air_quality.common.runtime import get_run_id
 
-# Create logs directory if it doesn't exist
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
-LOG_FILE = LOG_DIR /f"air_quality_etl_{RUN_ID}.log"
+
+airflow_logs = os.environ.get("AIRFLOW_HOME")
+LOG_DIR = Path(airflow_logs) / "logs" if airflow_logs else Path("logs")
 
 def setup_logging():
+    # Move LOG_DIR.mkdir and LOG_FILE creation here
+    LOG_DIR.mkdir(exist_ok=True)
+    LOG_FILE = LOG_DIR / f"air_quality_etl_{get_run_id()}.log"
+
     formatter = logging.Formatter(
-        f"%(asctime)s | run_id={RUN_ID} | %(levelname)s | %(name)s | %(etl_module)s | %(funcName)s | %(message)s"
+        f"%(asctime)s | run_id={get_run_id()} | %(levelname)s | %(name)s | %(etl_module)s | %(funcName)s | %(message)s"
     )
 
     handlers=[
@@ -19,6 +23,7 @@ def setup_logging():
     
     root_logger = logging.getLogger("air_quality_etl")
     root_logger.setLevel(logging.INFO)
+    root_logger.propagate = False
 
     if not root_logger.handlers:
         for handler in handlers:

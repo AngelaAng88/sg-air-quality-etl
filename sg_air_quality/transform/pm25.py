@@ -1,7 +1,6 @@
 import pandas as pd
 from sg_air_quality.common.logger import setup_logging, get_logger
 
-setup_logging()
 logger = get_logger(__name__)
 
 def flatten_pm25(pm25_readings: dict, metadata: dict) -> pd.DataFrame:

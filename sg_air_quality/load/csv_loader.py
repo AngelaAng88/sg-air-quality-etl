@@ -4,7 +4,6 @@ from datetime import datetime, timezone, timedelta
 from sg_air_quality.common.logger import setup_logging, get_logger
 import time
 
-setup_logging()
 logger = get_logger(__name__)
 
 def save_dataframe_to_csv(df: pd.DataFrame, path: Path):
