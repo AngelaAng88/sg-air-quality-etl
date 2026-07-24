@@ -7,7 +7,7 @@ def flatten_psi(psi_readings: dict, metadata: dict) -> pd.DataFrame:
     logger.info("Flattening PSI readings with region metadata")
     # Pivot psi_readings into separate columns
     pivoted_df = psi_readings.pivot_table(
-        index=['timestamp', 'region'],
+        index=['date', 'timestamp', 'region'],
         columns='psi_readings',
         values='psi_value',
         aggfunc='first'
@@ -20,7 +20,7 @@ def flatten_psi(psi_readings: dict, metadata: dict) -> pd.DataFrame:
 
 def transform_psi(df: dict) -> dict:
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df["date"] = df["timestamp"].dt.date
+    df["date"] = pd.to_datetime(df["date"]).dt.date
     df['latitude'] = df['latitude'].astype(float)
     df['longitude'] = df['longitude'].astype(float)
     df['co_eight_hour_max'] = df['co_eight_hour_max'].astype(float)

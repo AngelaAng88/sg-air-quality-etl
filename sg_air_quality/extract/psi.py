@@ -25,9 +25,11 @@ def extract_psi_readings(data: dict) -> pd.DataFrame:
     for item in data['data']['items']:
         timestamp = item['timestamp']
         readings = item['readings']
+        date_value = item['date']
         for psi_readings, value_sets in readings.items():
             for region, value in value_sets.items():
                 rows.append({
+                    'date': date_value,
                     'timestamp': timestamp,
                     'psi_readings': psi_readings,
                     'region': region,

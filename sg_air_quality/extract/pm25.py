@@ -23,10 +23,12 @@ def extract_pm25_readings(data: dict) -> pd.DataFrame:
     logger.info("Extracting PM2.5 readings into DataFrame")
     rows = []
     for item in data['data']['items']:
+        date_value = item['date']
         timestamp = item['timestamp']
         readings = item['readings']['pm25_one_hourly']
         for region, value in readings.items():
             rows.append({
+                'date': date_value,
                 'timestamp': timestamp,
                 'region': region,
                 'pm25_value': value

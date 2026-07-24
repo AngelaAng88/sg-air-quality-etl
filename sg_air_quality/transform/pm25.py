@@ -11,7 +11,8 @@ def flatten_pm25(pm25_readings: dict, metadata: dict) -> pd.DataFrame:
 
 def transform_pm25(df: dict) -> dict:
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df["date"] = df["timestamp"].dt.date
+    print(df["timestamp"].dtype)
+    df["date"] = pd.to_datetime(df["date"]).dt.date
     df['pm25_value'] = df['pm25_value'].astype(float)
     df['latitude'] = df['latitude'].astype(float)
     df['longitude'] = df['longitude'].astype(float)

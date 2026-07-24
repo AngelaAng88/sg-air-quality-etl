@@ -61,6 +61,8 @@ sg-air-quality-etl/
 │   │   └── paths.py            # Resolves output CSV paths (latest vs. date-partitioned archive)
 │   ├── pipeline/
 │   │   └── runner.py           # run_single_etl() — generic ETL runner used by PM2.5 and PSI
+│   ├── scripts/
+│   │   └── run_backfill.ps1    # Run from the project root with .venv activated
 │   └── main.py                 # Entry point; orchestrates full ETL run for a given date
 ├── .env.example                # Environment variable template
 ├── requirements.txt            # Python dependencies
@@ -126,6 +128,20 @@ python -m sg_air_quality.main
 # Run for a specific date
 python -m sg_air_quality.main --date 2025-01-15
 ```
+
+### 5. Backfill historical data
+For loading a full historical date range (typically done once, right after initial setup), use the backfill script rather than calling `main.py` for each date manually.
+```bash
+.\scripts\run_backfill.ps1
+```
+This loops through each date in the configured range and calls `python -m sg_air_quality.main --date <date>` once per day.
+
+Configuring the date range — edit the `$startDate` and `$endDate` variables at the top of `scripts/run_backfill.ps1`:
+```bash
+$startDate = Get-Date "2025-07-23"
+$endDate = Get-Date "2026-07-22"
+```
+Note: the script does not stops when encountered on the first failed date (non-zero exit code from main.py). Check the console output for which date failed before re-running.
 
 ## How It Works
 
